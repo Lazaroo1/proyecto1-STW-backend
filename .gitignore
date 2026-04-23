@@ -1,8 +1,6 @@
 # Compiled binary
 proyecto1-STW-backend
 
-*.db
-
 # Environment variables
 .env
 
