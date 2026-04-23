@@ -7,18 +7,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"proyecto1-STW-backend/models"
 )
 
 type SeriesHandler struct {
 	DB *sql.DB
-}
-
-type Series struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	CurrentEpisode int    `json:"current_episode"`
-	TotalEpisodes  int    `json:"total_episodes"`
-	ImageURL       string `json:"image_url"`
 }
 
 func respondJSON(w http.ResponseWriter, status int, data any) {
@@ -39,31 +33,24 @@ func getIDFromPath(path string) (int, error) {
 	return strconv.Atoi(parts[1])
 }
 
-// ServeHTTP routes all /series and /series/* requests
 func (h *SeriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
 	switch {
-	// GET /series  POST /series
 	case len(parts) == 1 && r.Method == http.MethodGet:
 		h.GetAll(w, r)
 	case len(parts) == 1 && r.Method == http.MethodPost:
 		h.Create(w, r)
-
-	// GET /series/:id  PUT /series/:id  DELETE /series/:id
 	case len(parts) == 2 && r.Method == http.MethodGet:
 		h.GetOne(w, r)
 	case len(parts) == 2 && r.Method == http.MethodPut:
 		h.Update(w, r)
 	case len(parts) == 2 && r.Method == http.MethodDelete:
 		h.Delete(w, r)
-
-	// GET /series/:id/rating  POST /series/:id/rating
 	case len(parts) == 3 && parts[2] == "rating" && r.Method == http.MethodGet:
 		h.GetRating(w, r)
 	case len(parts) == 3 && parts[2] == "rating" && r.Method == http.MethodPost:
 		h.SetRating(w, r)
-
 	default:
 		respondError(w, http.StatusNotFound, "not found")
 	}
@@ -101,7 +88,7 @@ func (h *SeriesHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		FROM series s
 		LEFT JOIN ratings r ON s.id = r.series_id
 		WHERE s.name LIKE ?
-		ORDER BY %s %s
+		ORDER BY s.%s %s
 		LIMIT ? OFFSET ?
 	`, sort, order)
 
@@ -112,14 +99,9 @@ func (h *SeriesHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type SeriesWithRating struct {
-		Series
-		Rating int `json:"rating"`
-	}
-
-	data := []SeriesWithRating{}
+	data := []models.SeriesWithRating{}
 	for rows.Next() {
-		var s SeriesWithRating
+		var s models.SeriesWithRating
 		rows.Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes, &s.ImageURL, &s.Rating)
 		data = append(data, s)
 	}
@@ -143,7 +125,7 @@ func (h *SeriesHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var s Series
+	var s models.Series
 	err = h.DB.QueryRow(
 		"SELECT id, name, current_episode, total_episodes, image_url FROM series WHERE id = ?", id,
 	).Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes, &s.ImageURL)
@@ -156,18 +138,16 @@ func (h *SeriesHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "database error")
 		return
 	}
-
 	respondJSON(w, http.StatusOK, s)
 }
 
 // POST /series
 func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var body Series
+	var body models.Series
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-
 	if strings.TrimSpace(body.Name) == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
 		return
@@ -194,8 +174,8 @@ func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, _ := res.LastInsertId()
-	body.ID = int(id)
+	insertID, _ := res.LastInsertId()
+	body.ID = int(insertID)
 	body.Name = strings.TrimSpace(body.Name)
 	respondJSON(w, http.StatusCreated, body)
 }
@@ -215,12 +195,11 @@ func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body Series
+	var body models.Series
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-
 	if strings.TrimSpace(body.Name) == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
 		return
@@ -265,7 +244,6 @@ func (h *SeriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	h.DB.Exec("DELETE FROM ratings WHERE series_id = ?", id)
 	h.DB.Exec("DELETE FROM series WHERE id = ?", id)
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -287,7 +265,6 @@ func (h *SeriesHandler) GetRating(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "database error")
 		return
 	}
-
 	respondJSON(w, http.StatusOK, map[string]any{"series_id": id, "rating": rating})
 }
 
@@ -313,6 +290,5 @@ func (h *SeriesHandler) SetRating(w http.ResponseWriter, r *http.Request) {
 
 	h.DB.Exec("DELETE FROM ratings WHERE series_id = ?", id)
 	h.DB.Exec("INSERT INTO ratings (series_id, rating) VALUES (?, ?)", id, body.Rating)
-
 	respondJSON(w, http.StatusOK, map[string]any{"series_id": id, "rating": body.Rating})
 }
