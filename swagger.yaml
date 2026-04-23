@@ -5,7 +5,9 @@ info:
   description: REST API to manage a personal series tracker
 
 servers:
+  - url: https://proyecto1-stw-backend-production.up.railway.app
   - url: http://localhost:8080
+
 
 paths:
   /series:
