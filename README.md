@@ -3,8 +3,8 @@
 API REST para un tracker personal de series, hecha con Go y SQLite.
 
 **Frontend:** [proyecto1-STW-frontend](https://github.com/Lazaroo1/proyecto1-STW-frontend)  
-**API en producción:** https://proyecto1-stw-backend-production.up.railway.app 
- **Documentación (Swagger UI):** https://proyecto1-stw-backend-production.up.railway.app/docs
+**API en producción:** https://proyecto1-stw-backend-production.up.railway.app   
+ **Documentación (Swagger UI):** https://proyecto1-stw-backend-production.up.railway.app/docs  
 
 ## Screenshot
 
