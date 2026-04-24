@@ -56,7 +56,6 @@ func (h *SeriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GET /series?q=&sort=&order=&page=&limit=
 func (h *SeriesHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	search := q.Get("q")
@@ -77,7 +76,7 @@ func (h *SeriesHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 		page = p
 	}
-	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 10000 {
 		limit = l
 	}
 	offset := (page - 1) * limit
@@ -117,7 +116,6 @@ func (h *SeriesHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /series/:id
 func (h *SeriesHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r.URL.Path)
 	if err != nil {
@@ -141,7 +139,6 @@ func (h *SeriesHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, s)
 }
 
-// POST /series
 func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var body models.Series
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -180,7 +177,6 @@ func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, body)
 }
 
-// PUT /series/:id
 func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r.URL.Path)
 	if err != nil {
@@ -227,7 +223,6 @@ func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, body)
 }
 
-// DELETE /series/:id
 func (h *SeriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r.URL.Path)
 	if err != nil {
@@ -247,7 +242,6 @@ func (h *SeriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GET /series/:id/rating
 func (h *SeriesHandler) GetRating(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r.URL.Path)
 	if err != nil {
@@ -268,7 +262,6 @@ func (h *SeriesHandler) GetRating(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{"series_id": id, "rating": rating})
 }
 
-// POST /series/:id/rating
 func (h *SeriesHandler) SetRating(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r.URL.Path)
 	if err != nil {
