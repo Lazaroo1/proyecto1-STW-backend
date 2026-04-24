@@ -9,6 +9,7 @@ API REST para un tracker personal de series, hecha con Go y SQLite.
 ## Screenshot
 
 ![Backend corriendo](screenshot.png)
+![Backend corriendo](screenshot2.png)
 
 ## Cómo correr localmente
 
